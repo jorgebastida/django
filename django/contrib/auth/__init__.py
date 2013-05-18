@@ -122,16 +122,23 @@ def get_user_model():
 def get_user(request):
     from django.conf import settings
     from django.contrib.auth.models import AnonymousUser
+
+    # Check if the user has credentials.
     try:
         user_id = request.session[SESSION_KEY]
         backend_path = request.session[BACKEND_SESSION_KEY]
     except KeyError:
         user = AnonymousUser()
     else:
-        if backend_path not in settings.AUTHENTICATION_BACKENDS:
+        # Check if the backend used is still a valid backend.
+        if backend_path in settings.AUTHENTICATION_BACKENDS:
+            try:
+                backend = load_backend(backend_path)
+            except ImproperlyConfigured:
+                user = AnonymousUser()
+            else:
+                user = backend.get_user(user_id) or AnonymousUser()
+        else:
             request.session.flush()
             user = AnonymousUser()
-        else:
-            backend = load_backend(backend_path)
-            user = backend.get_user(user_id)
     return user

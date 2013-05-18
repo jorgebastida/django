@@ -392,7 +392,36 @@ class ChangedBackendSettingsTest(TestCase):
             # Assert that the user retrieval is successful and the user is
             # anonymous as the backend is not longer available.
             self.assertIsNotNone(user)
-            self.assertTrue(user.is_anonymous)
+            self.assertTrue(user.is_anonymous())
+
+    @override_settings(AUTHENTICATION_BACKENDS=(new_backend, ))
+    def test_unavailable_backend_settings(self):
+        """
+        Tests that removing a backend configured in AUTHENTICATION_BACKENDS
+        make already logged in users disconnect.
+        """
+
+        # Get a session for the test user
+        self.assertTrue(self.client.login(
+            username=self.TEST_USERNAME,
+            password=self.TEST_PASSWORD)
+        )
+
+        # Prepare a request object
+        request = HttpRequest()
+        request.session = self.client.session
+
+        # Remove NewModelBackend
+        import sys
+        del sys.modules[self.__module__].NewModelBackend
+
+        # Get the user from the request
+        user = get_user(request)
+
+        # Assert that the user retrieval is successful and the user is
+        # anonymous as the backend is not longer available.
+        self.assertIsNotNone(user)
+        self.assertTrue(user.is_anonymous())
 
 
 @skipIfCustomUser
