@@ -1,7 +1,4 @@
-# PEP-414
 from __future__ import unicode_literals
-n = str
-
 from datetime import date
 
 from django.conf import settings
