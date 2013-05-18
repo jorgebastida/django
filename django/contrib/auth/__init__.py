@@ -124,13 +124,13 @@ def get_user(request):
     try:
         user_id = request.session[SESSION_KEY]
         backend_path = request.session[BACKEND_SESSION_KEY]
-
+    except KeyError:
+        user = AnonymousUser()
+    else:
         if backend_path not in settings.AUTHENTICATION_BACKENDS:
             request.session.flush()
             user = AnonymousUser()
         else:
             backend = load_backend(backend_path)
             user = backend.get_user(user_id)
-    except KeyError:
-        user = AnonymousUser()
     return user
